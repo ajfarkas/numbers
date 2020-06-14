@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Numbers for Kieran</title>
+	<style type="text/css">
+		:root {
+			--font: sans-serif;
+			--lnHeight: 1.3;
+		}
+		* { margin: 0; }
+		html {
+			font-family: var(--font);
+		}
+		ul {
+			display: inline-flex;
+			flex-direction: row-reverse;
+			justify-content: center;
+			max-width: 10rem;
+			padding: 0;
+			list-style: none;
+			line-height: var(--lnHeight);
+		}
+		li {
+			display: inline-block;
+			border: 1px solid slategrey;
+			padding: 0 0.25rem;
+			margin: 0 0.125rem;
+		}
+		#addition {
+			position: relative;
+			display: inline-block;
+			padding: 20px;
+		}
+		[type="number"]#addend1 {
+			position: fixed;
+			top: -100vh
+			left: -100vw;
+			opacity: 0;
+		}
+		.addend {
+			position: relative;
+			height: calc(var(--lnHeight) * 1rem);
+			overflow: hidden;
+		}
+		.colinset {
+			position: relative;
+			transition: 500ms ease;
+		}
+		.numeral {
+
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<section id="addition">
+			<ul class="addend first">
+				<input id="addend1" type="number" name="addend1" value="1"/>
+			</ul>
+		</section>
+	</main>
+</body>
+<script type="text/javascript">
+	const cols = ['ones', 'tens', 'hundreds', 'thousands'];
+	const colsLen = cols.length;
+	let maxOrder = 0;
+
+	const leftPad = (num, len) => {
+		let n = num.toString();
+		for (; n.length < len;) {
+			n = '0' + n;
+		}
+		return n;
+	}
+
+	const mkCol = (container, order = cols[maxOrder++]) => {
+		let i = 0;
+		const col = document.createElement('li');
+		col.classList.add(order, 'col');
+
+		const colInset = document.createElement('div');
+		colInset.classList.add(order, 'colinset');
+		col.appendChild(colInset);
+
+		for (;i < 10; i++) {
+			const num = document.createElement('p');
+			num.classList.add('numeral');
+			num.innerText = i;
+			colInset.appendChild(num);
+		}
+		container.appendChild(col);
+	}
+
+	const selectAllInput = e => { e.target.select(); };
+	const splitReverse = s => s.split('').reverse();
+	
+	// elements in DOM
+	const addendUL = document.querySelector('.first.addend');
+	const addend1 = document.getElementById('addend1');
+
+	cols.forEach(() => mkCol(addendUL))
+	addendUL.addEventListener('click', () => { addend1.focus(); addend1.select(); });
+	addend1.addEventListener('input', ({ target }) => {
+		const valString = target.value.toString();
+
+		if (valString.length <= colsLen) {
+			const container = target.closest('.addend');
+			const colContain = target.nextElementSibling.firstElementChild;
+			const h = colContain.clientHeight / 10;
+			const paddedVal = leftPad(valString, colsLen);
+
+			console.log(paddedVal);
+			splitReverse(paddedVal).forEach((v, i) => {
+				const num = parseInt(v);
+				const col = container.children[i + 1];
+				const colInset = col.firstChild;
+				const offset = -1 * num * h + 'px';
+				colInset.style.top = offset;
+				console.log(num, offset);
+			})
+		}
+	});
+</script>
+</html>
