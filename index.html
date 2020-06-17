@@ -16,7 +16,8 @@
 		main {
 			text-align: center;
 		}
-		ul {
+		/* these will be used for multiple classes */
+		.addend {
 			display: inline-flex;
 			flex-direction: row-reverse;
 			justify-content: center;
@@ -25,12 +26,13 @@
 			list-style: none;
 			line-height: var(--lnHeight);
 		}
-		li {
+		.col {
 			display: inline-block;
 			border: 1px solid slategrey;
 			padding: 0 0.25rem;
 			margin: 0 0.125rem;
 		}
+		/* single class styles */
 		#addition {
 			position: relative;
 			display: inline-block;
@@ -38,9 +40,10 @@
 		}
 		[type="number"]#addend1 {
 			position: fixed;
-			top: -100vh;
+			/*top: -100vh;
 			left: -100vw;
-			opacity: 0;
+			opacity: 0;*/
+			left: 70%;
 		}
 		.addend {
 			position: relative;
@@ -48,17 +51,13 @@
 			/*overflow: hidden;*/
 		}
 		.col {
-			perspective: 10rem;
-			transform-style: preserve-3d;
-			transform: rotateY(50deg);
 		}
 		.colinset {
 			position: relative;
 			transition: 500ms ease;
-			perspective: 10rem;
 			transform-style: preserve-3d;
-			transform-origin: 50% 50% 1rem;
-			transform: rotateX(72deg);
+			transform-origin: 50% 50% -2rem;
+			transform: rotateX(0deg);
 		}
 		.colinset:before {
 			content: '0';
@@ -112,9 +111,12 @@
 	</main>
 </body>
 <script type="text/javascript">
-	const cols = ['ones'];
+	const cols = ['ones', 'tens', 'hundreds', 'thousands'];
 	const colsLen = cols.length;
+	const rotateDeg = 36; // 360 / 10;
 	let maxOrder = 0;
+
+	const numRows = {};
 
 	const leftPad = (num, len) => {
 		let n = num.toString();
@@ -142,8 +144,46 @@
 		container.appendChild(col);
 	}
 
-	const selectAllInput = e => { e.target.select(); };
+	const selectAllInput = () => {};
+	// const selectAllInput = e => { e.target.select(); };
 	const splitReverse = s => s.split('').reverse();
+
+	const rotateDials = ({ target }) => {
+		const {value} = target;
+		const valString = target.value.toString();
+		const prevValue = numRows[target.id] || '';
+		numRows[target.id] = valString;
+
+		const rotateDir = valString.length > prevValue.length
+			? 1 : -1;
+
+		if (valString.length <= colsLen) {
+			const container = target.closest('.addend');
+			const colContain = target.nextElementSibling.firstElementChild;
+			const h = colContain.clientHeight / 10;
+			const paddedVal = leftPad(valString, colsLen);
+			const reversedVal = splitReverse(paddedVal);
+
+			console.log(paddedVal);
+			reversedVal.forEach((v, i) => {
+				const num = parseInt(v);
+				const prevNum = parseInt(splitReverse(leftPad(prevValue, colsLen))[i]);
+				let delta = num - prevNum;
+				if (num < prevNum && rotateDir === 1) {
+					delta += 10;
+				} else if (num > prevNum && rotateDir === -1) {
+					delta -= 10;
+				}
+				const col = container.children[i + 1];
+				const colInset = col.firstChild;
+				const prevTransformInt = colInset.style.transform.match(/\d+/) || [0];
+				const prevOffset = parseInt(prevTransformInt[0]);
+				const offset = (rotateDeg * delta) + prevOffset;
+				colInset.style.transform = `rotateX(${offset}deg)`;
+				console.log(num, offset);
+			})
+		}
+	};
 	
 	// elements in DOM
 	const addendUL = document.querySelector('.first.addend');
@@ -151,25 +191,6 @@
 
 	cols.forEach(() => mkCol(addendUL))
 	addendUL.addEventListener('click', () => { addend1.focus(); addend1.select(); });
-	addend1.addEventListener('input', ({ target }) => {
-		const valString = target.value.toString();
-
-		if (valString.length <= colsLen) {
-			const container = target.closest('.addend');
-			const colContain = target.nextElementSibling.firstElementChild;
-			const h = colContain.clientHeight / 10;
-			const paddedVal = leftPad(valString, colsLen);
-
-			console.log(paddedVal);
-			splitReverse(paddedVal).forEach((v, i) => {
-				const num = parseInt(v);
-				const col = container.children[i + 1];
-				const colInset = col.firstChild;
-				const offset = -1 * num * h + 'px';
-				colInset.style.top = offset;
-				console.log(num, offset);
-			})
-		}
-	});
+	addend1.addEventListener('input', rotateDials);
 </script>
 </html>
